@@ -73,5 +73,4 @@ long DataFile::tellp() { return this->file->tellp(); }
 long DataFile::tellg()
 {
   return this->file->tellg();
-  ;
 }
