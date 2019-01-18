@@ -1,3 +1,6 @@
+#ifndef SUPER_BLOCK_H
+#define SUPER_BLOCK_H
+
 struct SuperBlock
 {
   char *name;
@@ -6,3 +9,5 @@ struct SuperBlock
   int firstFreeDataBlock;
   int firstDataBlock;
 };
+
+#endif

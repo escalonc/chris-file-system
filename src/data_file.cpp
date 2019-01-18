@@ -1,4 +1,4 @@
-#include "DataFile.h"
+#include "data_file.h"
 
 DataFile::DataFile() { this->file = new fstream(); }
 

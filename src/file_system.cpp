@@ -1,5 +1,6 @@
 #include <string.h>
-#include "FileSystem.h"
+#include "file_system.h"
+#include "constants.h"
 
 FileSystem::FileSystem() { this->superBlock = new SuperBlock(); }
 
@@ -7,7 +8,7 @@ FileSystem::~FileSystem() {}
 
 void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
 {
-  const int dataBlocksQuantity = nodeEntriesQuantity * 33308;
+  const int dataBlocksQuantity = nodeEntriesQuantity * TOTAL_DATA_BLOCKS_IN_NODE_ENTRY;
   this->dataFile = new DataFile(path);
   this->superBlock->nodeEntriesQuantity = nodeEntriesQuantity;
 

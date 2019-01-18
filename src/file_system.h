@@ -1,10 +1,10 @@
 #ifndef FILE_SYSTEM_H
 #define FILE_SYSTEM_H
 
-#include "DataBlock.h"
-#include "DataFile.h"
-#include "NodeEntry.h"
-#include "SuperBlock.h"
+#include "data_block.h"
+#include "data_file.h"
+#include "node_entry.h"
+#include "super_block.h"
 
 class FileSystem
 {
