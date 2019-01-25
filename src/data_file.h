@@ -9,6 +9,7 @@ class DataFile
 private:
   fstream *file;
   char *path;
+  long currentDirectoryBytePosition;
 
 public:
   DataFile();

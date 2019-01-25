@@ -11,6 +11,7 @@ class FileSystem
 private:
   int nodeEntriesQuantity;
   DataFile *dataFile;
+  int currentDirectoryInByte;
 
   SuperBlock *superBlock;
 

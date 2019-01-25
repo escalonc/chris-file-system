@@ -13,13 +13,13 @@ struct NodeEntry
   char type;
   char date[30];
 
-  int dataBlockBitmap[NODE_ENTRIES_DATA_BLOCKS];
+  unsigned int dataBlockBitmap[NODE_ENTRIES_DATA_BLOCKS];
 
   int parent;
   int firstChild;
   int rightBrother;
   int firstBlock;
-  bool isFree = true;
+  bool isFree;
 
   unsigned int datablocksLocations[NODE_ENTRIES_DATA_BLOCKS];
   IndexBlockFirstLevel indexBlockFirstLevel;
