@@ -11,9 +11,7 @@ struct NodeEntry
   char name[30];
   int size;
   char type;
-  char date[30];
-
-  unsigned int dataBlockBitmap[NODE_ENTRIES_DATA_BLOCKS];
+  char date[10];
 
   int parent;
   int firstChild;

@@ -5,7 +5,6 @@
 
 struct IndexBlockSecondLevel
 {
-  int dataBlockBitmap[INDEX_BLOCKS_SECOND_LEVEL];
   IndexBlockFirstLevel indexBlockSecondLevel[INDEX_BLOCKS_SECOND_LEVEL];
 };
 

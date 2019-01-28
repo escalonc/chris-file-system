@@ -40,7 +40,7 @@ int main()
 
     if (strcmp(command, "create-disk") == 0)
     {
-      fileSystem->createDisk(parameter, 20);
+      fileSystem->createDisk(parameter, 10);
     }
     else if (strcmp(command, "mkdir") == 0)
     {

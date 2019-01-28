@@ -3,8 +3,7 @@
 
 struct DataBlock
 {
-  char data[4092];
-  int next;
+  char data[4096];
 };
 
 #endif

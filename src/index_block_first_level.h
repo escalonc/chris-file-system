@@ -6,7 +6,6 @@
 
 struct IndexBlockFirstLevel
 {
-  int dataBlockBitmap[INDEX_BLOCKS_FIRST_LEVEL];
   int dataBlockLocation[INDEX_BLOCKS_FIRST_LEVEL];
 };
 

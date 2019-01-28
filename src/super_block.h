@@ -3,11 +3,12 @@
 
 struct SuperBlock
 {
-  char *name;
+  char name[30];
   int nodeEntriesQuantity;
   int firstNodeEntry;
-  int firstFreeDataBlock;
   int firstDataBlock;
+  int firstFreeNodeEntry;
+  int firstFreeDataBlock;
 };
 
 #endif

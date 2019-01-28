@@ -3,14 +3,21 @@
 #include "constants.h"
 #include <iostream>
 
-FileSystem::FileSystem() { this->superBlock = new SuperBlock(); }
+FileSystem::FileSystem()
+{
+  this->superBlock = new SuperBlock();
+}
 
-FileSystem::~FileSystem() {}
+FileSystem::~FileSystem()
+{
+}
 
 void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
 {
-  const int dataBlocksQuantity = nodeEntriesQuantity * TOTAL_DATA_BLOCKS_IN_NODE_ENTRY;
   this->dataFile = new DataFile(path);
+  this->dataFile->open(ios::in | ios::out | ios::app | ios::binary);
+
+  const int dataBlocksQuantity = nodeEntriesQuantity * TOTAL_DATA_BLOCKS_IN_NODE_ENTRY;
   this->currentDirectoryInByte += sizeof(SuperBlock);
 
   this->superBlock->nodeEntriesQuantity = nodeEntriesQuantity;
@@ -21,13 +28,13 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
 
   for (unsigned int i = 0; i < nodeEntriesQuantity; i++)
   {
-    NodeEntry *nodeEntry = new NodeEntry();
-    nodeEntry->isFree = true;
-    strcpy(nodeEntry->name, (char *)"00000");
+    NodeEntry *newNodeEntry = new NodeEntry();
+    newNodeEntry->isFree = true;
+    strcpy(newNodeEntry->name, (char *)"00000");
 
-    this->dataFile->write(reinterpret_cast<char *>(nodeEntry),
+    this->dataFile->write(reinterpret_cast<char *>(newNodeEntry),
                           sizeof(NodeEntry));
-    delete nodeEntry;
+    delete newNodeEntry;
   }
 
   for (unsigned int i = 0; i < dataBlocksQuantity; i++)
@@ -47,19 +54,23 @@ void FileSystem::makeDirectory(char *name)
 {
   this->dataFile->open();
 
-  NodeEntry *nodeEntry = new NodeEntry();
+  NodeEntry *newNodeEntry = new NodeEntry();
+  newNodeEntry = reinterpret_cast<NodeEntry *>(
+      this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
 
-  nodeEntry = reinterpret_cast<NodeEntry *>(
-      this->dataFile->readKnownSize(this->currentDirectoryInByte, sizeof(NodeEntry)));
-
-  if (nodeEntry->isFree)
+  for (size_t i = 0; i < 1000; i++)
   {
-    strcpy(nodeEntry->name, name);
-    nodeEntry->parent
-        nodeEntry->type = 'd';
-    this->dataFile->write(reinterpret_cast<char *>(nodeEntry), this->currentDirectoryInByte,
-                          sizeof(nodeEntry));
+    if (newNodeEntry->isFree)
+    {
+      strcpy(newNodeEntry->name, name);
+      newNodeEntry->type = 'd';
+      this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), this->currentDirectoryInByte,
+                            sizeof(NodeEntry));
+    }
   }
+
+  delete newNodeEntry;
+  this->dataFile->close();
 }
 
 void FileSystem::changeDirectory(char *name) {}
@@ -72,8 +83,8 @@ void FileSystem::list()
 
   while (currentDirectory)
   {
-    std::cout << currentDirectory->name << endl;
+    std::cout << currentDirectory->name << "\n";
     long position = this->currentDirectoryInByte += sizeof(NodeEntry);
-    this->dataFile->readKnownSize(position, sizeof(NodeEntry));
+    this->dataFile->read(position, sizeof(NodeEntry));
   }
 }
