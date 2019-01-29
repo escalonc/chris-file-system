@@ -16,13 +16,13 @@ struct NodeEntry
   int parent;
   int firstChild;
   int rightBrother;
-  int firstBlock;
+  int lastChild;
   bool isFree;
 
   unsigned int datablocksLocations[NODE_ENTRIES_DATA_BLOCKS];
-  IndexBlockFirstLevel indexBlockFirstLevel;
-  IndexBlockSecondLevel indexBlockSecondLevel;
-  IndexBlockThirdLevel indexBlockThirdLevel;
+  unsigned int indexBlockFirstLevel;
+  unsigned int indexBlockSecondLevel;
+  unsigned int indexBlockThirdLevel;
 };
 
 #endif

@@ -2,7 +2,8 @@
   "files.associations": {
     "*.tpp": "cpp",
     "fstream": "cpp",
-    "iosfwd": "cpp"
+    "iosfwd": "cpp",
+    "cstdlib": "cpp"
   },
   "terminal.integrated.shell.windows": "cmd.exe"
 }

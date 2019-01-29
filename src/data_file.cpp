@@ -37,7 +37,6 @@ void DataFile::write(char *data, unsigned int position, unsigned int size)
 void DataFile::write(char *data, unsigned int size)
 {
   this->file->write(data, size);
-  this->file->flush();
 }
 
 char *DataFile::read(unsigned int position, unsigned int size)

@@ -10,6 +10,8 @@ FileSystem::FileSystem()
 
 FileSystem::~FileSystem()
 {
+  delete this->superBlock;
+  delete this->dataFile;
 }
 
 void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
@@ -45,6 +47,30 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
     delete dataBlock;
   }
 
+  for (unsigned int i = 0; i < nodeEntriesQuantity; i++)
+  {
+    IndexBlockFirstLevel *indexBlockFirstLevel = new IndexBlockFirstLevel();
+    this->dataFile->write(reinterpret_cast<char *>(indexBlockFirstLevel),
+                          sizeof(IndexBlockFirstLevel));
+    delete indexBlockFirstLevel;
+  }
+
+  for (unsigned int i = 0; i < nodeEntriesQuantity; i++)
+  {
+    IndexBlockSecondLevel *indexBlockSecondLevel = new IndexBlockSecondLevel();
+    this->dataFile->write(reinterpret_cast<char *>(indexBlockSecondLevel),
+                          sizeof(IndexBlockFirstLevel));
+    delete indexBlockSecondLevel;
+  }
+
+  for (unsigned int i = 0; i < nodeEntriesQuantity; i++)
+  {
+    IndexBlockThirdLevel *indexBlockThirdLevel = new IndexBlockThirdLevel();
+    this->dataFile->write(reinterpret_cast<char *>(indexBlockThirdLevel),
+                          sizeof(IndexBlockThirdLevel));
+    delete indexBlockThirdLevel;
+  }
+
   this->dataFile->close();
 }
 
@@ -75,16 +101,26 @@ void FileSystem::makeDirectory(char *name)
 
 void FileSystem::changeDirectory(char *name) {}
 
-void FileSystem::changeToPreviousDirectory() {}
+void FileSystem::changeToPreviousDirectory()
+{
+  NodeEntry *currentDirectory;
+  currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
+  this->currentDirectoryInByte = currentDirectory->parent;
+  delete currentDirectory;
+}
 
 void FileSystem::list()
 {
   NodeEntry *currentDirectory;
+  currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
 
   while (currentDirectory)
   {
     std::cout << currentDirectory->name << "\n";
     long position = this->currentDirectoryInByte += sizeof(NodeEntry);
     this->dataFile->read(position, sizeof(NodeEntry));
+    currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
   }
+
+  delete currentDirectory;
 }

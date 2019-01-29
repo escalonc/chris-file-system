@@ -16,8 +16,6 @@ private:
   SuperBlock *superBlock;
 
 public:
-  NodeEntry *currentNodeEntry;
-
   FileSystem();
   ~FileSystem();
 
