@@ -5,7 +5,7 @@
 
 struct IndexBlockThirdLevel
 {
-  IndexBlockSecondLevel indexBlockSecondLevel[INDEX_BLOCKS_THIRD_LEVEL];
+  unsigned int indexBlockSecondLevel[INDEX_BLOCKS_THIRD_LEVEL];
 };
 
 #endif

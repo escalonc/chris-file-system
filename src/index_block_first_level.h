@@ -6,7 +6,7 @@
 
 struct IndexBlockFirstLevel
 {
-  int dataBlockLocation[INDEX_BLOCKS_FIRST_LEVEL];
+  unsigned int dataBlockLocation[INDEX_BLOCKS_FIRST_LEVEL];
 };
 
 #endif

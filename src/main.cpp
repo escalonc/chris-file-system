@@ -12,7 +12,6 @@ using namespace std;
 
 void init()
 {
-  system("clear");
   cout << "Chris File System [CFS]" << endl
        << endl;
 }

@@ -6,12 +6,14 @@
 FileSystem::FileSystem()
 {
   this->superBlock = new SuperBlock();
+  this->bitVector = new BitVector();
 }
 
 FileSystem::~FileSystem()
 {
   delete this->superBlock;
   delete this->dataFile;
+  delete this->bitVector;
 }
 
 void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
@@ -20,13 +22,21 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
   this->dataFile->open(ios::in | ios::out | ios::app | ios::binary);
 
   const int dataBlocksQuantity = nodeEntriesQuantity * TOTAL_DATA_BLOCKS_IN_NODE_ENTRY;
-  this->currentDirectoryInByte += sizeof(SuperBlock);
+
+  this->bitVector->dataBlockVector = new char[dataBlocksQuantity / 8];
+  this->bitVector->indexBlockFirstLevelVector = new char[nodeEntriesQuantity / 8];
+  this->bitVector->indexBlockSecondLevelVector = new char[nodeEntriesQuantity / 8];
+  this->bitVector->indexBlockThirdLevelVector = new char[nodeEntriesQuantity / 8];
+
+  this->currentDirectoryInByte += sizeof(SuperBlock) + sizeof(this->bitVector);
 
   this->superBlock->nodeEntriesQuantity = nodeEntriesQuantity;
   this->superBlock->firstDataBlock = this->currentDirectoryInByte;
 
   this->dataFile->write(reinterpret_cast<char *>(this->superBlock),
                         sizeof(SuperBlock));
+
+  this->dataFile->write(reinterpret_cast<char *>(this->bitVector), sizeof(this->bitVector));
 
   for (unsigned int i = 0; i < nodeEntriesQuantity; i++)
   {

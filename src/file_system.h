@@ -5,15 +5,16 @@
 #include "data_file.h"
 #include "node_entry.h"
 #include "super_block.h"
+#include "bit_vector.h"
 
 class FileSystem
 {
 private:
-  int nodeEntriesQuantity;
   DataFile *dataFile;
-  int currentDirectoryInByte;
-
   SuperBlock *superBlock;
+  int nodeEntriesQuantity;
+  int currentDirectoryInByte;
+  BitVector *bitVector;
 
 public:
   FileSystem();
