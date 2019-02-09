@@ -8,12 +8,10 @@
 
 #include "file_system.h"
 
-using namespace std;
-
 void init()
 {
-  cout << "Chris File System [CFS]" << endl
-       << endl;
+  std::cout << "Chris File System [CFS]" << std::endl
+            << std::endl;
 }
 
 int main()
@@ -26,8 +24,8 @@ int main()
 
   while (strcmp(token, "exit") != 0)
   {
-    cout << "$ ";
-    cin.getline(token, 30);
+    std::cout << "$ ";
+    std::cin.getline(token, 30);
 
     if (strlen(token) == 0)
     {

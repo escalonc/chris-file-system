@@ -12,9 +12,10 @@ class FileSystem
 private:
   DataFile *dataFile;
   SuperBlock *superBlock;
-  int nodeEntriesQuantity;
   int currentDirectoryInByte;
   BitVector *bitVector;
+  long makeDirectoryInPosition(char *name, unsigned int position);
+  long nextFreeNodeEntryPosition();
 
 public:
   FileSystem();

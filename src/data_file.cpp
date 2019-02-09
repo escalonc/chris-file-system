@@ -1,11 +1,11 @@
 #include "data_file.h"
 
-DataFile::DataFile() { this->file = new fstream(); }
+DataFile::DataFile() { this->file = new std::fstream(); }
 
 DataFile::DataFile(char *path)
 {
   this->path = path;
-  this->file = new fstream();
+  this->file = new std::fstream();
 }
 
 DataFile::~DataFile()
@@ -16,10 +16,10 @@ DataFile::~DataFile()
 
 void DataFile::open()
 {
-  this->file->open(this->path, ios::in | ios::out | ios::binary);
+  this->file->open(this->path, std::ios::in | std::ios::out | std::ios::binary);
 }
 
-void DataFile::open(ios_base::openmode mode)
+void DataFile::open(std::ios_base::openmode mode)
 {
   this->file->open(this->path, mode);
 }
@@ -28,7 +28,7 @@ void DataFile::close() { this->file->close(); }
 
 void DataFile::write(char *data, unsigned int position, unsigned int size)
 {
-  this->file->seekp(0, ios::beg);
+  this->file->seekp(0, std::ios::beg);
   this->file->seekp(position);
 
   this->file->write(data, size);
@@ -49,9 +49,9 @@ char *DataFile::read(unsigned int position, unsigned int size)
   return element;
 }
 
-long DataFile::tellp() { return this->file->tellp(); }
+long DataFile::writePosition() { return this->file->tellp(); }
 
-long DataFile::tellg()
+long DataFile::readPosition()
 {
   return this->file->tellg();
 }
