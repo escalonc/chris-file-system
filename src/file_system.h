@@ -26,7 +26,10 @@ public:
   void makeDirectory(char *name);
   void changeDirectory(char *name);
   void changeToPreviousDirectory();
+  void removeNodeEntry(char *name);
   void list();
+  void importFile(char *name);
+  char *exportFile(char *name);
 };
 
 #endif

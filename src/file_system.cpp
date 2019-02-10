@@ -50,7 +50,6 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
     this->dataFile->write(reinterpret_cast<char *>(nodeEntry),
                           sizeof(NodeEntry));
   }
-  delete nodeEntry;
 
   DataBlock *dataBlock = new DataBlock();
   for (size_t i = 0; i < dataBlocksQuantity; i++)
@@ -58,7 +57,6 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
     this->dataFile->write(reinterpret_cast<char *>(dataBlock),
                           sizeof(DataBlock));
   }
-  delete dataBlock;
 
   IndexBlockFirstLevel *indexBlockFirstLevel = new IndexBlockFirstLevel();
   for (size_t i = 0; i < nodeEntriesQuantity; i++)
@@ -66,7 +64,6 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
     this->dataFile->write(reinterpret_cast<char *>(indexBlockFirstLevel),
                           sizeof(IndexBlockFirstLevel));
   }
-  delete indexBlockFirstLevel;
 
   IndexBlockSecondLevel *indexBlockSecondLevel = new IndexBlockSecondLevel();
   for (size_t i = 0; i < nodeEntriesQuantity; i++)
@@ -74,7 +71,6 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
     this->dataFile->write(reinterpret_cast<char *>(indexBlockSecondLevel),
                           sizeof(IndexBlockFirstLevel));
   }
-  delete indexBlockSecondLevel;
 
   IndexBlockThirdLevel *indexBlockThirdLevel = new IndexBlockThirdLevel();
   for (size_t i = 0; i < nodeEntriesQuantity; i++)
@@ -82,7 +78,6 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
     this->dataFile->write(reinterpret_cast<char *>(indexBlockThirdLevel),
                           sizeof(IndexBlockThirdLevel));
   }
-  delete indexBlockThirdLevel;
 
   this->dataFile->close();
 
@@ -93,6 +88,12 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
   rootDirectory->isFree = false;
   this->dataFile->write(reinterpret_cast<char *>(rootDirectory), this->currentDirectoryInByte, sizeof(NodeEntry));
   this->dataFile->close();
+
+  delete nodeEntry;
+  delete dataBlock;
+  delete indexBlockFirstLevel;
+  delete indexBlockSecondLevel;
+  delete indexBlockThirdLevel;
   delete rootDirectory;
 }
 
@@ -170,17 +171,39 @@ void FileSystem::makeDirectory(char *name)
     this->dataFile->write(reinterpret_cast<char *>(lastChild), lastChildPreviousPosition, sizeof(NodeEntry));
   }
 
-  delete nodeEntry;
   this->dataFile->close();
+  delete nodeEntry;
 }
 
-void FileSystem::changeDirectory(char *name) {}
+void FileSystem::changeDirectory(char *name)
+{
+  this->dataFile->open();
+  NodeEntry *currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
+  NodeEntry *childNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->firstChild, sizeof(NodeEntry)));
+  do
+  {
+    if (strcmp(childNodeEntry->name, name) == 0)
+    {
+      this->currentDirectoryInByte = this->dataFile->readPosition() - sizeof(NodeEntry);
+      break;
+    }
+    childNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->rightBrother, sizeof(NodeEntry)));
+
+  } while (childNodeEntry->rightBrother != -1);
+
+  this->dataFile->close();
+  delete currentDirectory;
+  delete childNodeEntry;
+}
 
 void FileSystem::changeToPreviousDirectory()
 {
+  this->dataFile->open();
   NodeEntry *currentDirectory;
   currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
   this->currentDirectoryInByte = currentDirectory->parent;
+
+  this->dataFile->close();
   delete currentDirectory;
 }
 
@@ -199,15 +222,14 @@ void FileSystem::list()
   currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->firstChild, sizeof(NodeEntry)));
   std::cout << currentDirectory->name << std::endl;
 
-  while (currentDirectory->rightBrother >= 0)
+  while (currentDirectory->rightBrother != -1)
   {
     currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->rightBrother, sizeof(NodeEntry)));
     std::cout << currentDirectory->name << std::endl;
   }
 
-  delete currentDirectory;
-
   this->dataFile->close();
+  delete currentDirectory;
 }
 
 long FileSystem::nextFreeNodeEntryPosition()
@@ -226,4 +248,10 @@ long FileSystem::nextFreeNodeEntryPosition()
 
   std::cout << "No space in disk" << std::endl;
   return -1;
+}
+
+void FileSystem::removeNodeEntry(char *name)
+{
+  this->dataFile->open();
+  this->dataFile->close();
 }

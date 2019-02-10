@@ -47,6 +47,14 @@ int main()
     {
       fileSystem->list();
     }
+    else if (strcmp(command, "cd") == 0 && strcmp(parameter, "..") == 0)
+    {
+      fileSystem->changeToPreviousDirectory();
+    }
+    else if (strcmp(command, "cd") == 0)
+    {
+      fileSystem->changeDirectory(parameter);
+    }
     else if (strcmp(command, "clear") == 0)
     {
       init();
