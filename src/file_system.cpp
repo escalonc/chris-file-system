@@ -85,6 +85,15 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
   delete indexBlockThirdLevel;
 
   this->dataFile->close();
+
+  this->dataFile->open();
+  NodeEntry *rootDirectory = new NodeEntry();
+  rootDirectory->firstChild = rootDirectory->rightBrother = rootDirectory->lastChild = -1;
+  strcpy(rootDirectory->name, (char *)"/");
+  rootDirectory->isFree = false;
+  this->dataFile->write(reinterpret_cast<char *>(rootDirectory), this->currentDirectoryInByte, sizeof(NodeEntry));
+  this->dataFile->close();
+  delete rootDirectory;
 }
 
 void FileSystem::mountDisk(char *path) { this->dataFile = new DataFile(path); }
@@ -97,20 +106,17 @@ void FileSystem::makeDirectory(char *name)
   nodeEntry = reinterpret_cast<NodeEntry *>(
       this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
 
-  this->dataFile->close();
-
   if (nodeEntry->isFree)
   {
-    this->dataFile->open();
 
     strcpy(nodeEntry->name, name);
     nodeEntry->type = 'd';
+    nodeEntry->isFree = false;
+    nodeEntry->rightBrother = -1;
     this->dataFile->write(reinterpret_cast<char *>(nodeEntry), this->currentDirectoryInByte,
                           sizeof(NodeEntry));
-
-    this->dataFile->close();
   }
-  else if (!nodeEntry->isFree && nodeEntry->firstChild == 1)
+  else if (!nodeEntry->isFree && nodeEntry->firstChild == -1)
   {
     long newNodeEntryPosition = nextFreeNodeEntryPosition();
 
@@ -120,23 +126,21 @@ void FileSystem::makeDirectory(char *name)
       return;
     }
 
-    this->dataFile->open();
-
     NodeEntry *newNodeEntry = new NodeEntry();
     strcpy(newNodeEntry->name, name);
     newNodeEntry->type = 'd';
+    newNodeEntry->isFree = false;
+    newNodeEntry->firstChild = newNodeEntry->lastChild = newNodeEntry->rightBrother = -1;
     newNodeEntry->parent = this->currentDirectoryInByte;
     this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), newNodeEntryPosition,
                           sizeof(NodeEntry));
 
-    nodeEntry->lastChild = nodeEntry->firstChild = newNodeEntryPosition;
+    nodeEntry->firstChild = nodeEntry->lastChild = newNodeEntryPosition;
 
     this->dataFile->write(reinterpret_cast<char *>(nodeEntry), this->currentDirectoryInByte,
                           sizeof(NodeEntry));
-
-    this->dataFile->close();
   }
-  else if (!nodeEntry->isFree && nodeEntry->lastChild)
+  else if (!nodeEntry->isFree && nodeEntry->firstChild != -1)
   {
     long newNodeEntryPosition = nextFreeNodeEntryPosition();
 
@@ -146,35 +150,24 @@ void FileSystem::makeDirectory(char *name)
       return;
     }
 
-    NodeEntry *lastChildNodeEntry;
-    this->dataFile->open();
-    lastChildNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(nodeEntry->lastChild, sizeof(NodeEntry)));
-
     NodeEntry *newNodeEntry = new NodeEntry();
     strcpy(newNodeEntry->name, name);
     newNodeEntry->type = 'd';
+    newNodeEntry->isFree = false;
+    newNodeEntry->firstChild = newNodeEntry->lastChild = newNodeEntry->rightBrother = -1;
     newNodeEntry->parent = this->currentDirectoryInByte;
     this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), newNodeEntryPosition,
                           sizeof(NodeEntry));
 
-    lastChildNodeEntry->rightBrother = newNodeEntryPosition;
+    int lastChildPreviousPosition = nodeEntry->lastChild;
+    NodeEntry *lastChild = reinterpret_cast<NodeEntry *>(this->dataFile->read(nodeEntry->lastChild, sizeof(NodeEntry)));
+    lastChild->rightBrother = newNodeEntryPosition;
     nodeEntry->lastChild = newNodeEntryPosition;
 
     this->dataFile->write(reinterpret_cast<char *>(nodeEntry), this->currentDirectoryInByte,
                           sizeof(NodeEntry));
 
-    this->dataFile->close();
-  }
-
-  for (size_t i = 0; i < this->superBlock->nodeEntriesQuantity - 1; i++)
-  {
-    if (nodeEntry->isFree)
-    {
-      strcpy(nodeEntry->name, name);
-      nodeEntry->type = 'd';
-      this->dataFile->write(reinterpret_cast<char *>(nodeEntry), this->currentDirectoryInByte,
-                            sizeof(NodeEntry));
-    }
+    this->dataFile->write(reinterpret_cast<char *>(lastChild), lastChildPreviousPosition, sizeof(NodeEntry));
   }
 
   delete nodeEntry;
@@ -194,46 +187,43 @@ void FileSystem::changeToPreviousDirectory()
 void FileSystem::list()
 {
   this->dataFile->open();
-  NodeEntry *currentDirectory, *childNodeEntry;
+  NodeEntry *currentDirectory;
   currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
 
-  if (currentDirectory->firstChild == -1)
+  if (currentDirectory->isFree || currentDirectory->firstChild == -1)
   {
     std::cout << "Empty directory!" << std::endl;
     return;
   }
 
-  childNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->firstChild, sizeof(NodeEntry)));
+  currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->firstChild, sizeof(NodeEntry)));
+  std::cout << currentDirectory->name << std::endl;
 
-  while (childNodeEntry->rightBrother != -1)
+  while (currentDirectory->rightBrother >= 0)
   {
-    std::cout << childNodeEntry->name << std::endl;
-    childNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->rightBrother, sizeof(NodeEntry)));
+    currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->rightBrother, sizeof(NodeEntry)));
+    std::cout << currentDirectory->name << std::endl;
   }
 
   delete currentDirectory;
-  delete childNodeEntry;
 
   this->dataFile->close();
 }
 
 long FileSystem::nextFreeNodeEntryPosition()
 {
-  this->dataFile->open();
-
   unsigned int initialPosition = this->superBlock->firstNodeEntry;
 
   for (size_t i = 0; i < this->superBlock->nodeEntriesQuantity; i++)
   {
     NodeEntry *currentNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(initialPosition, sizeof(NodeEntry)));
-    if (currentNodeEntry->isFree)
+    if (currentNodeEntry->isFree && this->dataFile->readPosition() != this->currentDirectoryInByte)
     {
       return this->dataFile->readPosition() - sizeof(NodeEntry);
     }
+    initialPosition += sizeof(NodeEntry);
   }
 
   std::cout << "No space in disk" << std::endl;
   return -1;
-
-  this->dataFile->close();
 }

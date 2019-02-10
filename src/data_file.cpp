@@ -43,9 +43,8 @@ char *DataFile::read(unsigned int position, unsigned int size)
 {
   char *element = new char[size];
 
-  this->file->seekg(position);
+  this->file->seekg(position, std::ios::beg);
   this->file->read(element, size);
-
   return element;
 }
 

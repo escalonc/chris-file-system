@@ -37,11 +37,15 @@ int main()
 
     if (strcmp(command, "create-disk") == 0)
     {
-      fileSystem->createDisk(parameter, 10);
+      fileSystem->createDisk(parameter, 5);
     }
     else if (strcmp(command, "mkdir") == 0)
     {
       fileSystem->makeDirectory(parameter);
+    }
+    else if (strcmp(command, "ls") == 0)
+    {
+      fileSystem->list();
     }
     else if (strcmp(command, "clear") == 0)
     {
