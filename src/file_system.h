@@ -16,6 +16,7 @@ private:
   BitVector *bitVector;
   long makeDirectoryInPosition(char *name, unsigned int position);
   long nextFreeNodeEntryPosition();
+  void removeNodeEntry(NodeEntry *nodeEntry, int position);
 
 public:
   FileSystem();

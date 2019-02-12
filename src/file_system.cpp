@@ -244,4 +244,119 @@ long FileSystem::nextFreeNodeEntryPosition()
 
 void FileSystem::removeNodeEntry(char *name)
 {
+  unsigned int initialPosition = this->superBlock->firstNodeEntry;
+  NodeEntry *currentNodeEntry;
+
+  for (size_t i = 0; i < this->superBlock->nodeEntriesQuantity; i++)
+  {
+    currentNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(initialPosition, sizeof(NodeEntry)));
+    if (strcmp(currentNodeEntry->name, name) == 0)
+    {
+      break;
+    }
+    initialPosition += sizeof(NodeEntry);
+  }
+
+  if (strcmp(currentNodeEntry->name, name) != 0)
+  {
+    std::cout << "Not found!" << std::endl;
+  }
+
+  NodeEntry *parent = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentNodeEntry->parent, sizeof(NodeEntry)));
+
+  int parentPosition = currentNodeEntry->parent;
+  int brotherPosition = currentNodeEntry->rightBrother;
+  int firstChildPosition = currentNodeEntry->firstChild;
+
+  if (currentNodeEntry->firstChild != -1)
+  {
+    NodeEntry *child = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentNodeEntry->firstChild, sizeof(NodeEntry)));
+    removeNodeEntry(child, currentNodeEntry->firstChild);
+  }
+
+  if (initialPosition == parent->firstChild)
+  {
+    parent->firstChild = brotherPosition;
+    this->dataFile->write(reinterpret_cast<char *>(parent), parentPosition, sizeof(NodeEntry));
+  }
+  else if (initialPosition == parent->lastChild)
+  {
+    NodeEntry *nodeEntry;
+    int position = parent->firstChild;
+    int location = 0;
+    do
+    {
+      nodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(position, sizeof(NodeEntry)));
+      location = this->dataFile->readPosition() - sizeof(NodeEntry);
+    } while (nodeEntry->rightBrother != initialPosition);
+
+    nodeEntry->rightBrother = -1;
+
+    NodeEntry *newNodeEntry = new NodeEntry();
+    strcpy(newNodeEntry->name, (char *)"00000");
+    newNodeEntry->isFree = true;
+    newNodeEntry->firstChild = newNodeEntry->lastChild = newNodeEntry->rightBrother = -1;
+    newNodeEntry->parent = -1;
+    this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), initialPosition,
+                          sizeof(NodeEntry));
+
+    this->dataFile->write(reinterpret_cast<char *>(nodeEntry), location,
+                          sizeof(NodeEntry));
+  }
+  else
+  {
+    NodeEntry *nodeEntry;
+    int position = parent->firstChild;
+    int location = 0;
+    do
+    {
+      nodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(position, sizeof(NodeEntry)));
+      position = nodeEntry->rightBrother;
+      location = this->dataFile->readPosition() - sizeof(NodeEntry);
+    } while (nodeEntry->rightBrother != initialPosition);
+
+    nodeEntry->rightBrother = brotherPosition;
+
+    NodeEntry *newNodeEntry = new NodeEntry();
+    strcpy(newNodeEntry->name, (char *)"00000");
+    newNodeEntry->isFree = true;
+    newNodeEntry->firstChild = newNodeEntry->lastChild = newNodeEntry->rightBrother = -1;
+    newNodeEntry->parent = -1;
+    this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), initialPosition,
+                          sizeof(NodeEntry));
+
+    this->dataFile->write(reinterpret_cast<char *>(nodeEntry), location,
+                          sizeof(NodeEntry));
+  }
+}
+
+void FileSystem::removeNodeEntry(NodeEntry *nodeEntry, int position)
+{
+  if (position == -1)
+  {
+    return;
+  }
+
+  int childPosition = nodeEntry->firstChild;
+  int brotherPosition = nodeEntry->rightBrother;
+
+  NodeEntry *newNodeEntry = new NodeEntry();
+  strcpy(newNodeEntry->name, (char *)"00000");
+  newNodeEntry->isFree = true;
+  newNodeEntry->firstChild = newNodeEntry->lastChild = newNodeEntry->rightBrother = -1;
+  newNodeEntry->parent = -1;
+  this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), position,
+                        sizeof(NodeEntry));
+
+  if (brotherPosition != -1)
+  {
+    NodeEntry *brother = reinterpret_cast<NodeEntry *>(this->dataFile->read(brotherPosition, sizeof(NodeEntry)));
+    removeNodeEntry(brother, brotherPosition);
+  }
+
+  if (childPosition != -1)
+  {
+    NodeEntry *child = reinterpret_cast<NodeEntry *>(this->dataFile->read(childPosition, sizeof(NodeEntry)));
+    removeNodeEntry(child, childPosition);
+  }
 }

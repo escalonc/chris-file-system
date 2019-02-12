@@ -37,7 +37,7 @@ int main()
 
     if (strcmp(command, "create-disk") == 0)
     {
-      fileSystem->createDisk(parameter, 5);
+      fileSystem->createDisk(parameter, 10);
     }
     else if (strcmp(command, "mkdir") == 0)
     {
@@ -54,6 +54,10 @@ int main()
     else if (strcmp(command, "cd") == 0)
     {
       fileSystem->changeDirectory(parameter);
+    }
+    else if (strcmp(command, "rm") == 0)
+    {
+      fileSystem->removeNodeEntry(parameter);
     }
     else if (strcmp(command, "clear") == 0)
     {
