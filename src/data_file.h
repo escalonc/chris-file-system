@@ -7,7 +7,7 @@ class DataFile
 {
 private:
   std::fstream *file;
-  char *path;
+  const char *path;
 
 public:
   DataFile();

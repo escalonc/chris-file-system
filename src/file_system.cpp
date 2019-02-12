@@ -11,6 +11,7 @@ FileSystem::FileSystem()
 
 FileSystem::~FileSystem()
 {
+  this->dataFile->close();
   delete this->superBlock;
   delete this->dataFile;
   delete this->bitVector;
@@ -87,7 +88,7 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
   strcpy(rootDirectory->name, (char *)"/");
   rootDirectory->isFree = false;
   this->dataFile->write(reinterpret_cast<char *>(rootDirectory), this->currentDirectoryInByte, sizeof(NodeEntry));
-  this->dataFile->close();
+  // this->dataFile->close();
 
   delete nodeEntry;
   delete dataBlock;
@@ -95,14 +96,13 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
   delete indexBlockSecondLevel;
   delete indexBlockThirdLevel;
   delete rootDirectory;
+  // this->dataFile->open();
 }
 
 void FileSystem::mountDisk(char *path) { this->dataFile = new DataFile(path); }
 
 void FileSystem::makeDirectory(char *name)
 {
-  this->dataFile->open();
-
   NodeEntry *nodeEntry;
   nodeEntry = reinterpret_cast<NodeEntry *>(
       this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
@@ -171,45 +171,38 @@ void FileSystem::makeDirectory(char *name)
     this->dataFile->write(reinterpret_cast<char *>(lastChild), lastChildPreviousPosition, sizeof(NodeEntry));
   }
 
-  this->dataFile->close();
   delete nodeEntry;
 }
 
 void FileSystem::changeDirectory(char *name)
 {
-  this->dataFile->open();
   NodeEntry *currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
-  NodeEntry *childNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->firstChild, sizeof(NodeEntry)));
-  do
+  int position = currentDirectory->firstChild;
+  while (position != -1)
   {
+    NodeEntry *childNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(position, sizeof(NodeEntry)));
     if (strcmp(childNodeEntry->name, name) == 0)
     {
       this->currentDirectoryInByte = this->dataFile->readPosition() - sizeof(NodeEntry);
       break;
     }
-    childNodeEntry = reinterpret_cast<NodeEntry *>(this->dataFile->read(currentDirectory->rightBrother, sizeof(NodeEntry)));
+    position = childNodeEntry->rightBrother;
+  }
 
-  } while (childNodeEntry->rightBrother != -1);
-
-  this->dataFile->close();
   delete currentDirectory;
-  delete childNodeEntry;
 }
 
 void FileSystem::changeToPreviousDirectory()
 {
-  this->dataFile->open();
   NodeEntry *currentDirectory;
   currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
   this->currentDirectoryInByte = currentDirectory->parent;
 
-  this->dataFile->close();
   delete currentDirectory;
 }
 
 void FileSystem::list()
 {
-  this->dataFile->open();
   NodeEntry *currentDirectory;
   currentDirectory = reinterpret_cast<NodeEntry *>(this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
 
@@ -228,7 +221,6 @@ void FileSystem::list()
     std::cout << currentDirectory->name << std::endl;
   }
 
-  this->dataFile->close();
   delete currentDirectory;
 }
 
@@ -252,6 +244,4 @@ long FileSystem::nextFreeNodeEntryPosition()
 
 void FileSystem::removeNodeEntry(char *name)
 {
-  this->dataFile->open();
-  this->dataFile->close();
 }
