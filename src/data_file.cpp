@@ -57,3 +57,8 @@ long DataFile::readPosition()
 {
   return this->file->tellg();
 }
+
+long DataFile::size() {
+  this->file->seekg(0, std::ios::end);
+  return this->readPosition();
+}

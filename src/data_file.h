@@ -12,13 +12,14 @@ private:
 public:
   DataFile();
   ~DataFile();
-  DataFile(char *path);
+  DataFile(const char *path);
   void open();
   void open(std::ios_base::openmode mode);
   void close();
   void write(char *data, unsigned int position, unsigned int size);
   void write(char *data, unsigned int size);
   char *read(unsigned int position, unsigned int size);
+  long size();
   long writePosition();
   long readPosition();
 };

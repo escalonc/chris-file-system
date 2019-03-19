@@ -33,7 +33,7 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
 
   this->superBlock->firstNodeEntry = sizeof(SuperBlock) + sizeof(this->bitVector);
   this->superBlock->nodeEntriesQuantity = nodeEntriesQuantity;
-  this->superBlock->firstDataBlock = this->currentDirectoryInByte;
+  this->superBlock->firstDataBlock = this->superBlock->firstNodeEntry + (sizeof(NodeEntry) * nodeEntriesQuantity);
 
   this->dataFile->write(reinterpret_cast<char *>(this->superBlock),
                         sizeof(SuperBlock));
@@ -88,16 +88,14 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
   strcpy(rootDirectory->name, (char *)"/");
   rootDirectory->isFree = false;
   this->dataFile->write(reinterpret_cast<char *>(rootDirectory), this->currentDirectoryInByte, sizeof(NodeEntry));
-  // this->dataFile->close();
-
+  
   delete nodeEntry;
   delete dataBlock;
   delete indexBlockFirstLevel;
   delete indexBlockSecondLevel;
   delete indexBlockThirdLevel;
   delete rootDirectory;
-  // this->dataFile->open();
-}
+  }
 
 void FileSystem::mountDisk(char *path) { this->dataFile = new DataFile(path); }
 
@@ -107,17 +105,7 @@ void FileSystem::makeDirectory(char *name)
   nodeEntry = reinterpret_cast<NodeEntry *>(
       this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
 
-  if (nodeEntry->isFree)
-  {
-
-    strcpy(nodeEntry->name, name);
-    nodeEntry->type = 'd';
-    nodeEntry->isFree = false;
-    nodeEntry->rightBrother = -1;
-    this->dataFile->write(reinterpret_cast<char *>(nodeEntry), this->currentDirectoryInByte,
-                          sizeof(NodeEntry));
-  }
-  else if (!nodeEntry->isFree && nodeEntry->firstChild == -1)
+  if (!nodeEntry->isFree && nodeEntry->firstChild == -1)
   {
     long newNodeEntryPosition = nextFreeNodeEntryPosition();
 
@@ -359,4 +347,36 @@ void FileSystem::removeNodeEntry(NodeEntry *nodeEntry, int position)
     NodeEntry *child = reinterpret_cast<NodeEntry *>(this->dataFile->read(childPosition, sizeof(NodeEntry)));
     removeNodeEntry(child, childPosition);
   }
+}
+
+void FileSystem::importFile(const char *name) {
+
+  this->fileManager = new DataFile(name);
+  this->fileManager->open(std::ios::in | std::ios::out | std::ios::binary);
+  
+  long size = this->fileManager->size() / 4096;
+
+  if (size < 1) {
+    size = 1; 
+  }
+  
+
+  const int firstDataBlockPosition = this->superBlock->firstNodeEntry;
+
+  for(size_t i = 0; i < size; i++)
+  {
+    int currentBitLocation = 0;
+
+    if (i < NODE_ENTRIES_DATA_BLOCKS) {
+      
+    }
+    else if (i > NODE_ENTRIES_DATA_BLOCKS && i < INDEX_BLOCKS_FIRST_LEVEL) {
+
+    }
+    
+    
+    
+  }
+  
+
 }
