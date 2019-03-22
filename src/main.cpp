@@ -59,6 +59,14 @@ int main()
     {
       fileSystem->removeNodeEntry(parameter);
     }
+    else if (strcmp(command, "import") == 0)
+    {
+      fileSystem->importFile(parameter);
+    }
+    else if (strcmp(command, "export") == 0)
+    {
+      fileSystem->exportFile(parameter);
+    }
     else if (strcmp(command, "clear") == 0)
     {
       init();

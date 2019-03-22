@@ -2,6 +2,7 @@
 #include "file_system.h"
 #include "constants.h"
 #include <iostream>
+#include <cmath>
 
 FileSystem::FileSystem()
 {
@@ -88,14 +89,14 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
   strcpy(rootDirectory->name, (char *)"/");
   rootDirectory->isFree = false;
   this->dataFile->write(reinterpret_cast<char *>(rootDirectory), this->currentDirectoryInByte, sizeof(NodeEntry));
-  
+
   delete nodeEntry;
   delete dataBlock;
   delete indexBlockFirstLevel;
   delete indexBlockSecondLevel;
   delete indexBlockThirdLevel;
   delete rootDirectory;
-  }
+}
 
 void FileSystem::mountDisk(char *path) { this->dataFile = new DataFile(path); }
 
@@ -349,34 +350,82 @@ void FileSystem::removeNodeEntry(NodeEntry *nodeEntry, int position)
   }
 }
 
-void FileSystem::importFile(const char *name) {
+void FileSystem::importFile(const char *name)
+{
+  DataFile *fileImporter;
+  fileImporter = new DataFile(name);
+  fileImporter->open(std::ios::in | std::ios::out | std::ios::binary);
 
-  this->fileManager = new DataFile(name);
-  this->fileManager->open(std::ios::in | std::ios::out | std::ios::binary);
-  
-  long size = this->fileManager->size() / 4096;
+  double size = fileImporter->size() / (double)4096;
+  long remainingSize = fileImporter->size();
+  long sizeInBytes = fileImporter->size();
+  fileImporter->readPosition(0);
 
-  if (size < 1) {
-    size = 1; 
-  }
-  
-
-  const int firstDataBlockPosition = this->superBlock->firstNodeEntry;
-
-  for(size_t i = 0; i < size; i++)
+  if (size < 1)
   {
-    int currentBitLocation = 0;
-
-    if (i < NODE_ENTRIES_DATA_BLOCKS) {
-      
-    }
-    else if (i > NODE_ENTRIES_DATA_BLOCKS && i < INDEX_BLOCKS_FIRST_LEVEL) {
-
-    }
-    
-    
-    
+    size = 1;
   }
-  
 
+  std::cout << "size is: " << sizeInBytes;
+  int total = ceil(size);
+  const int firstDataBlockPosition = this->superBlock->firstDataBlock;
+
+  for (int i = 0; i < total; i++)
+  {
+
+    if (i <= NODE_ENTRIES_DATA_BLOCKS)
+    {
+
+      DataBlock *dataBlock = new DataBlock();
+
+      if (remainingSize < 4096)
+      {
+        strcpy(dataBlock->data, fileImporter->read(remainingSize));
+      }
+      else
+      {
+        strcpy(dataBlock->data, fileImporter->read(4096));
+      }
+
+      // std::cout << dataBlock->data<<std::endl;
+      // std::cout << "=================="<<std::endl;
+
+      this->dataFile->write(reinterpret_cast<char *>(dataBlock), this->superBlock->firstDataBlock + (i * sizeof(DataBlock)), sizeof(DataBlock));
+      remainingSize -= 4096;
+    }
+    else if (i > NODE_ENTRIES_DATA_BLOCKS && i < INDEX_BLOCKS_FIRST_LEVEL)
+    {
+    }
+  }
+
+  fileImporter->close();
+}
+
+void FileSystem::exportFile(const char *name)
+{
+  DataFile *exporter = new DataFile("test.jpg");
+  exporter->open(std::ios::in | std::ios::out | std::ios::binary | std::ios::app);
+  int size = 25695;
+
+  std::cout << "Export" << std::endl;
+  for (size_t i = 0; i < 7; i++)
+  {
+    DataBlock *dataBlock = new DataBlock();
+
+    if (size < 4096)
+    {
+      dataBlock = reinterpret_cast<DataBlock *>(this->dataFile->read(this->superBlock->firstDataBlock + (i * sizeof(DataBlock)), sizeof(DataBlock)));
+      exporter->write(dataBlock->data, size);
+    }
+    else
+    {
+      dataBlock = reinterpret_cast<DataBlock *>(this->dataFile->read(this->superBlock->firstDataBlock + (i * sizeof(DataBlock)), sizeof(DataBlock)));
+      exporter->write(dataBlock->data, 4096);
+    }
+    // std::cout << dataBlock->data<<std::endl;
+    // std::cout << "=================="<<std::endl;
+
+    size -= 4096;
+  }
+  exporter->close();
 }

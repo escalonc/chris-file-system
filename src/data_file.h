@@ -19,7 +19,9 @@ public:
   void write(char *data, unsigned int position, unsigned int size);
   void write(char *data, unsigned int size);
   char *read(unsigned int position, unsigned int size);
+  char *read(unsigned int size);
   long size();
+  void readPosition(int pistion);
   long writePosition();
   long readPosition();
 };

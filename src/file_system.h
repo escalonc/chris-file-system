@@ -11,7 +11,6 @@ class FileSystem
 {
 private:
   DataFile *dataFile;
-  DataFile *fileManager;
   SuperBlock *superBlock;
   int currentDirectoryInByte;
   BitVector *bitVector;
@@ -31,7 +30,7 @@ public:
   void removeNodeEntry(char *name);
   void list();
   void importFile(const char *name);
-  char *exportFile(const char *name);
+  void exportFile(const char *name);
   void setBit(int position);
   int readBit(int position);
 };

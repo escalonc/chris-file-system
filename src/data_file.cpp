@@ -2,7 +2,7 @@
 
 DataFile::DataFile() { this->file = new std::fstream(); }
 
-DataFile::DataFile(char *path)
+DataFile::DataFile(const char *path)
 {
   this->path = path;
   this->file = new std::fstream();
@@ -51,6 +51,16 @@ char *DataFile::read(unsigned int position, unsigned int size)
   }
 }
 
+char *DataFile::read(unsigned int position, unsigned int size)
+{
+  char *element = new char[size];
+
+  if (this->file->read(element, size))
+  {
+    return element;
+  }
+}
+
 long DataFile::writePosition() { return this->file->tellp(); }
 
 long DataFile::readPosition()
@@ -58,7 +68,16 @@ long DataFile::readPosition()
   return this->file->tellg();
 }
 
-long DataFile::size() {
+void DataFile::readPosition(int position)
+{
+  this->file->seekg(position, std::ios::beg);
+}
+
+long DataFile::size()
+{
+  long previousPosition = this->readPosition();
   this->file->seekg(0, std::ios::end);
-  return this->readPosition();
+  int newPosition = this->readPosition();
+  this->readPosition(previousPosition);
+  return newPosition;
 }

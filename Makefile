@@ -7,7 +7,7 @@ INCLUDE	:= include
 LIB		:= lib
 
 LIBRARIES	:=
-EXECUTABLE	:= a.out
+EXECUTABLE	:= main
 
 
 all: $(BIN)/$(EXECUTABLE)
