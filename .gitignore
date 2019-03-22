@@ -36,3 +36,5 @@ bin/
 *.dat
 *.jpg
 *.JPG
+*.avi
+.vscode/ipch
