@@ -106,26 +106,21 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
 
 void FileSystem::mountDisk(char *path) { this->dataFile = new DataFile(path); }
 
-void FileSystem::makeDirectory(char *name)
+int FileSystem::createNodeEntry(NodeEntry *newNodeEntry)
 {
   NodeEntry *nodeEntry;
   nodeEntry = reinterpret_cast<NodeEntry *>(
       this->dataFile->read(this->currentDirectoryInByte, sizeof(NodeEntry)));
 
+  long newNodeEntryPosition = nextFreeNodeEntryPosition();
   if (!nodeEntry->isFree && nodeEntry->firstChild == -1)
   {
-    long newNodeEntryPosition = nextFreeNodeEntryPosition();
-
     if (newNodeEntryPosition == -1)
     {
       std::cout << "No space" << std::endl;
       return;
     }
 
-    NodeEntry *newNodeEntry = new NodeEntry();
-    strcpy(newNodeEntry->name, name);
-    newNodeEntry->type = 'd';
-    newNodeEntry->isFree = false;
     newNodeEntry->firstChild = newNodeEntry->lastChild = newNodeEntry->rightBrother = -1;
     newNodeEntry->parent = this->currentDirectoryInByte;
     this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), newNodeEntryPosition,
@@ -138,18 +133,12 @@ void FileSystem::makeDirectory(char *name)
   }
   else if (!nodeEntry->isFree && nodeEntry->firstChild != -1)
   {
-    long newNodeEntryPosition = nextFreeNodeEntryPosition();
-
     if (newNodeEntryPosition == -1)
     {
       std::cout << "No space" << std::endl;
       return;
     }
 
-    NodeEntry *newNodeEntry = new NodeEntry();
-    strcpy(newNodeEntry->name, name);
-    newNodeEntry->type = 'd';
-    newNodeEntry->isFree = false;
     newNodeEntry->firstChild = newNodeEntry->lastChild = newNodeEntry->rightBrother = -1;
     newNodeEntry->parent = this->currentDirectoryInByte;
     this->dataFile->write(reinterpret_cast<char *>(newNodeEntry), newNodeEntryPosition,
@@ -167,6 +156,16 @@ void FileSystem::makeDirectory(char *name)
   }
 
   delete nodeEntry;
+  return newNodeEntryPosition;
+}
+
+void FileSystem::makeDirectory(char *name)
+{
+  NodeEntry *newNodeEntry = new NodeEntry();
+  strcpy(newNodeEntry->name, name);
+  newNodeEntry->type = 'd';
+  newNodeEntry->isFree = false;
+  createNodeEntry(newNodeEntry);
 }
 
 void FileSystem::changeDirectory(char *name)
@@ -358,8 +357,10 @@ void FileSystem::removeNodeEntry(NodeEntry *nodeEntry, int position)
 
 void FileSystem::importFile(const char *name)
 {
-  int nodeFileEntryPosition = nextFreeNodeEntryPosition();
-  NodeEntry *nodeEntry = new NodeEntry();
+  NodeEntry *newNodeEntry = new NodeEntry();
+  strcpy(newNodeEntry->name, name);
+  newNodeEntry->type = 'a';
+  newNodeEntry->isFree = false;
 
   std::ifstream *fileReader = new std::ifstream();
   fileReader->open(name, std::ios::in | std::ios::binary);
@@ -400,13 +401,15 @@ void FileSystem::importFile(const char *name)
       }
 
       this->dataFile->write(reinterpret_cast<char *>(dataBlock), this->superBlock->firstDataBlock + dataBlockPosition, sizeof(DataBlock));
-      nodeEntry->datablocksLocations[i] = this->superBlock->firstDataBlock + dataBlockPosition;
+      newNodeEntry->datablocksLocations[i] = this->superBlock->firstDataBlock + dataBlockPosition;
       remainingSize -= 4096;
     }
     else if (i > NODE_ENTRIES_DATA_BLOCKS && i < INDEX_BLOCKS_FIRST_LEVEL)
     {
     }
   }
+
+  createNodeEntry(newNodeEntry);
 
   fileReader->close();
 }

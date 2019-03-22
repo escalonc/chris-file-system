@@ -34,3 +34,5 @@
 bin/
 *.disk
 *.dat
+*.jpg
+*.JPG

@@ -30,7 +30,7 @@ public:
   void removeNodeEntry(char *name);
   void list();
   void importFile(const char *name);
-  int createNodeEntry(char *name, char type);
+  int createNodeEntry(NodeEntry *basicInfoNodeEntry);
   void exportFile(const char *name);
   void setBit(char *bitVector, int position);
   int readBit(char bitVector, int position);
