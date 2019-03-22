@@ -3,6 +3,7 @@
 #include "constants.h"
 #include <iostream>
 #include <cmath>
+#include <bitset>
 
 FileSystem::FileSystem()
 {
@@ -25,10 +26,15 @@ void FileSystem::createDisk(char *path, const int nodeEntriesQuantity)
 
   const int dataBlocksQuantity = nodeEntriesQuantity * TOTAL_DATA_BLOCKS_IN_NODE_ENTRY;
 
-  this->bitVector->dataBlockVector = new char[dataBlocksQuantity / 8];
-  this->bitVector->indexBlockFirstLevelVector = new char[nodeEntriesQuantity / 8];
-  this->bitVector->indexBlockSecondLevelVector = new char[nodeEntriesQuantity / 8];
-  this->bitVector->indexBlockThirdLevelVector = new char[nodeEntriesQuantity / 8];
+  this->bitVector->dataBlockVectorSize = dataBlocksQuantity / 8;
+  this->bitVector->indexBlockFirstLevelVectorSize = nodeEntriesQuantity / 8;
+  this->bitVector->indexBlockSecondLevelVectorSize = nodeEntriesQuantity / 8;
+  this->bitVector->indexBlockThirdLevelVectorSize = nodeEntriesQuantity / 8;
+
+  this->bitVector->dataBlockVector = new char[this->bitVector->dataBlockVectorSize];
+  this->bitVector->indexBlockFirstLevelVector = new char[this->bitVector->indexBlockFirstLevelVectorSize];
+  this->bitVector->indexBlockSecondLevelVector = new char[this->bitVector->indexBlockSecondLevelVectorSize];
+  this->bitVector->indexBlockThirdLevelVector = new char[this->bitVector->indexBlockThirdLevelVectorSize];
 
   this->currentDirectoryInByte = sizeof(SuperBlock) + sizeof(this->bitVector);
 
@@ -352,21 +358,26 @@ void FileSystem::removeNodeEntry(NodeEntry *nodeEntry, int position)
 
 void FileSystem::importFile(const char *name)
 {
-  DataFile *fileImporter;
-  fileImporter = new DataFile(name);
-  fileImporter->open(std::ios::in | std::ios::out | std::ios::binary);
+  int nodeFileEntryPosition = nextFreeNodeEntryPosition();
+  NodeEntry *nodeEntry = new NodeEntry();
 
-  double size = fileImporter->size() / (double)4096;
-  long remainingSize = fileImporter->size();
-  long sizeInBytes = fileImporter->size();
-  fileImporter->readPosition(0);
+  std::ifstream *fileReader = new std::ifstream();
+  fileReader->open(name, std::ios::in | std::ios::binary);
+
+  fileReader->seekg(0, std::ios::end);
+  long sizeInBytes = fileReader->tellg();
+
+  double size = sizeInBytes / (double)4096;
+  long remainingSize = sizeInBytes;
+
+  fileReader->seekg(0, std::ios::beg);
 
   if (size < 1)
   {
     size = 1;
   }
 
-  std::cout << "size is: " << sizeInBytes;
+  std::cout << "size in bytes is: " << sizeInBytes;
   int total = ceil(size);
   const int firstDataBlockPosition = this->superBlock->firstDataBlock;
 
@@ -377,20 +388,19 @@ void FileSystem::importFile(const char *name)
     {
 
       DataBlock *dataBlock = new DataBlock();
+      int dataBlockPosition = this->nextFreeBlock(this->bitVector->dataBlockVector, this->bitVector->dataBlockVectorSize);
 
       if (remainingSize < 4096)
       {
-        strcpy(dataBlock->data, fileImporter->read(remainingSize));
+        fileReader->read(dataBlock->data, remainingSize);
       }
       else
       {
-        strcpy(dataBlock->data, fileImporter->read(4096));
+        fileReader->read(dataBlock->data, 4096);
       }
 
-      // std::cout << dataBlock->data<<std::endl;
-      // std::cout << "=================="<<std::endl;
-
-      this->dataFile->write(reinterpret_cast<char *>(dataBlock), this->superBlock->firstDataBlock + (i * sizeof(DataBlock)), sizeof(DataBlock));
+      this->dataFile->write(reinterpret_cast<char *>(dataBlock), this->superBlock->firstDataBlock + dataBlockPosition, sizeof(DataBlock));
+      nodeEntry->datablocksLocations[i] = this->superBlock->firstDataBlock + dataBlockPosition;
       remainingSize -= 4096;
     }
     else if (i > NODE_ENTRIES_DATA_BLOCKS && i < INDEX_BLOCKS_FIRST_LEVEL)
@@ -398,12 +408,12 @@ void FileSystem::importFile(const char *name)
     }
   }
 
-  fileImporter->close();
+  fileReader->close();
 }
 
 void FileSystem::exportFile(const char *name)
 {
-  DataFile *exporter = new DataFile("test.jpg");
+  DataFile *exporter = new DataFile(name);
   exporter->open(std::ios::in | std::ios::out | std::ios::binary | std::ios::app);
   int size = 25695;
 
@@ -422,10 +432,39 @@ void FileSystem::exportFile(const char *name)
       dataBlock = reinterpret_cast<DataBlock *>(this->dataFile->read(this->superBlock->firstDataBlock + (i * sizeof(DataBlock)), sizeof(DataBlock)));
       exporter->write(dataBlock->data, 4096);
     }
-    // std::cout << dataBlock->data<<std::endl;
-    // std::cout << "=================="<<std::endl;
 
     size -= 4096;
   }
   exporter->close();
+}
+
+void FileSystem::printBitVectorSection(int bitVector)
+{
+  std::bitset<8> x(bitVector);
+  std::cout << x << '\n';
+}
+
+int FileSystem::readBit(char bitVector, int position)
+{
+  return (bitVector >> (7 - position)) & 1U;
+}
+
+void FileSystem::setBit(char *bitVector, int position)
+{
+  *bitVector |= 1UL << (7 - position);
+}
+
+int FileSystem::nextFreeBlock(char *bitVector, int size)
+{
+  for (size_t i = 0; i < size; i++)
+  {
+    char element = bitVector[i];
+    for (size_t j = 0; j < 7; i++)
+    {
+      if (!this->readBit(element, j))
+      {
+        return (i * 8) + j;
+      }
+    }
+  }
 }

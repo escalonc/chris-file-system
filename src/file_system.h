@@ -30,9 +30,12 @@ public:
   void removeNodeEntry(char *name);
   void list();
   void importFile(const char *name);
+  int createNodeEntry(char *name, char type);
   void exportFile(const char *name);
-  void setBit(int position);
-  int readBit(int position);
+  void setBit(char *bitVector, int position);
+  int readBit(char bitVector, int position);
+  void printBitVectorSection(int bitVector);
+  int nextFreeBlock(char *bitVector, int size);
 };
 
 #endif

@@ -9,6 +9,11 @@ struct BitVector
   char *indexBlockFirstLevelVector;
   char *indexBlockSecondLevelVector;
   char *indexBlockThirdLevelVector;
+
+  int dataBlockVectorSize;
+  int indexBlockFirstLevelVectorSize;
+  int indexBlockSecondLevelVectorSize;
+  int indexBlockThirdLevelVectorSize;
 };
 
 #endif

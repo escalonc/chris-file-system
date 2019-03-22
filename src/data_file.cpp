@@ -51,7 +51,7 @@ char *DataFile::read(unsigned int position, unsigned int size)
   }
 }
 
-char *DataFile::read(unsigned int position, unsigned int size)
+char *DataFile::read(unsigned int size)
 {
   char *element = new char[size];
 
